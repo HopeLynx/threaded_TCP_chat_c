@@ -102,16 +102,17 @@ void *recieve_message(void *client_socket){
             if (strlen(clients[ind].name)==0) {
                 send_to_one("add name first\n",sock);
             } else {
-
-                strcpy(send_msg,clients[ind].name);
-                strcat(send_msg,":");
+                strcpy(send_msg,"message:");
                 strcat(send_msg,tmp);
+                strcat(send_msg,"| from: ");
+                strcat(send_msg,clients[ind].name);
                 send_to_all(send_msg,sock);
             }
 
         } else if (strcmp(msg, "quit") == 0){
-            strcpy(send_msg,clients[ind].name);
-            strcat(send_msg," left\n");
+            strcpy(send_msg,"oh, ");
+            strcat(send_msg,clients[ind].name);
+            strcat(send_msg,"must have left\n");
             send_to_all(send_msg,sock);
 
         } else {
