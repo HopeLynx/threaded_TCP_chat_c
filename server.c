@@ -59,15 +59,13 @@ int parse_command(char* cmd, char** params) { //split cmd into array of params
 };
 
 void mystrcpy(char* dest, char* source){
-    int i = 0,m = 0;
-        while (1){
+    unsigned int i = 0,m = 0;
+        for (i=0;i<strlen(source);i++){
             if (source[i]!='\n'){
             dest[m] = source[i];
             m++;
             }
             if (dest[m] == '\0')break;
-
-            i++;
         }
     }
 
@@ -79,11 +77,13 @@ void *recieve_message(void *client_socket){
     int len;
     while((len = recv(sock,msg,MAX_MSG_LEN,0)) > 0) {
         msg[len] = '\0';
+//        msg[len-1] = 0;
         //TODO - proper parcer
 
         char* tmp = strchr(msg,' ');
         msg[tmp-msg]='\0';
         tmp++;
+        if(tmp[strlen(tmp)-1] == '\n')tmp[strlen(tmp)-1]=0;
         /*
             char* params[2];
             parse_command(msg, params); //split cmd into array of params
