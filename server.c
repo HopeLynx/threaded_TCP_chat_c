@@ -11,7 +11,7 @@
 #define MAX_MSG_LEN 500
 #define MAX_NAME_LEN 100
 #define HOST_IP "127.0.0.1"
-#define HOST_PORT 1239
+#define HOST_PORT 1242
 #define MAX_CLIENTS_NUM 25
 #define EXIT_PHRASE "exit\n"
 
@@ -48,6 +48,29 @@ void send_to_one(char *msg,int curr){
     pthread_mutex_unlock(&mutex);
 }
 
+int parse_command(char* cmd, char** params) { //split cmd into array of params
+    int i,m=-1;
+    for(i=0; i<2; i++) {
+        params[i] = strsep(&cmd, " ");
+        m++;
+        if(params[i] == NULL) break;
+    }
+    return(m);
+};
+
+void mystrcpy(char* dest, char* source){
+    int i = 0,m = 0;
+        while (1){
+            if (source[i]!='\n'){
+            dest[m] = source[i];
+            m++;
+            }
+            if (dest[m] == '\0')break;
+
+            i++;
+        }
+    }
+
 void *recieve_message(void *client_socket){
     int sock = *((int *)client_socket);
     int ind = 0;
@@ -55,50 +78,53 @@ void *recieve_message(void *client_socket){
     char msg[MAX_MSG_LEN];
     int len;
     while((len = recv(sock,msg,MAX_MSG_LEN,0)) > 0) {
-        //TODO - proper parcer
-        char send_msg[MAX_MSG_LEN+MAX_NAME_LEN];
         msg[len] = '\0';
-        if (strcmp(msg, "quit") == 0){
-            if (strlen(clients[ind].name)==0)
-                send_to_one("add name first\n",sock);
+        //TODO - proper parcer
 
+        char* tmp = strchr(msg,' ');
+        msg[tmp-msg]='\0';
+        tmp++;
+        /*
+            char* params[2];
+            parse_command(msg, params); //split cmd into array of params
+            if (strcmp(params[0], "name") == 0) {
+                strcpy(clients[ind].name,params[1]);
+                */
+        char send_msg[MAX_MSG_LEN+MAX_NAME_LEN];
+        if (strcmp(msg, "name") == 0) {
+            strcpy(clients[ind].name,tmp);
+            strcpy(send_msg,"new user:");
+            strcat(send_msg,clients[ind].name);
+            //                strcat(msg,"\n");
+            send_to_all(send_msg,sock);
+
+        } else if (strcmp(msg, "message") == 0){
+            if (strlen(clients[ind].name)==0) {
+                send_to_one("add name first\n",sock);
+            } else {
+
+                strcpy(send_msg,clients[ind].name);
+                strcat(send_msg,":");
+                strcat(send_msg,tmp);
+                send_to_all(send_msg,sock);
+            }
+
+        } else if (strcmp(msg, "quit") == 0){
             strcpy(send_msg,clients[ind].name);
             strcat(send_msg," left\n");
             send_to_all(send_msg,sock);
-            continue;
+
         } else {
-
-            char* tmp = strchr(msg,' ');
-            if (tmp==0)tmp = msg;
-            msg[tmp-msg]='\0';
-            tmp++;
-            if (strcmp(msg, "name") == 0) {
-                strcpy(clients[ind].name,tmp);
-                strcpy(send_msg,"new user:");
-                strcat(send_msg,clients[ind].name);
-                send_to_all(send_msg,sock);
-
-            } else if (strcmp(msg, "message") == 0){
-                if (strlen(clients[ind].name)==0) {
-                    send_to_one("add name first\n",sock);
-                } else {
-                    strcpy(send_msg,clients[ind].name);
-                    strcat(send_msg,":");
-                    strcat(send_msg,tmp);
-                    send_to_all(send_msg,sock);
-                }
-
-            } else {
-                printf("wtf: %s ; %s",msg,tmp);
-                send_to_one("unknown command\n",sock);
-            }
-
+            printf("wtf: %s ; %s",msg,tmp);
+            send_to_one("unknown command\n",sock);
         }
-        if (len == 0){
-            //желательно закрыть бы этот сокет и подвинуть массив
-            n--;
-            printf("The client closed the connection. Clients left: %d\n",n);
-        }
+
+
+    }
+    if (len == 0){
+        //желательно закрыть бы этот сокет и подвинуть массив
+        n--;
+        printf("The client closed the connection. Clients left: %d\n",n);
     }
 }
 
