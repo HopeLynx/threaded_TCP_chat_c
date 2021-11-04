@@ -11,7 +11,7 @@
 #define MAX_MSG_LEN 500
 #define MAX_NAME_LEN 100
 #define HOST_IP "127.0.0.1"
-#define HOST_PORT 1242
+#define HOST_PORT 1243
 #define MAX_CLIENTS_NUM 25
 #define EXIT_PHRASE "exit\n"
 
